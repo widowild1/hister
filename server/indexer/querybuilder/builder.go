@@ -131,6 +131,13 @@ func getTokenQuery(t Token) (query.Query, bool) {
 				return q, negated
 			}
 		}
+		if strings.HasPrefix(t.Value, "metadata.") && strings.Contains(t.Value, ":") {
+			field := strings.Split(t.Value, ":")[0]
+			v := strings.TrimPrefix(t.Value, field+":")
+			q := bleve.NewTermQuery(v)
+			q.SetField(field)
+			return q, negated
+		}
 		for f := range weights {
 			if strings.HasPrefix(t.Value, f+":") {
 				field = f
