@@ -794,7 +794,7 @@ func Search(cfg *config.Config, q *Query) (*Results, error) {
 		req.SortBy([]string{"domain", "_id"})
 	default:
 		sortByScore = true
-		req.SortBy([]string{"-_score", "_id"})
+		req.SortBy([]string{"-_score", "-added", "_id"})
 	}
 
 	if q.PageKey != "" {
