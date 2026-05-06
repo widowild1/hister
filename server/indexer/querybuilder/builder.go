@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -42,7 +43,7 @@ func Build(s string) query.Query {
 			qs = append(qs, q)
 		}
 	}
-	if len(qt) > 1 {
+	if len(qt) > 1 && !anyFieldSpecific(qt) {
 		// create a full phrase query from the query string to get exact matches for the full query
 		pq := createMatchPhraseQuery(s, 2)
 		qs = []query.Query{
@@ -53,6 +54,39 @@ func Build(s string) query.Query {
 		}
 	}
 	return query.NewBooleanQuery(qs, nil, nqs)
+}
+
+// anyFieldSpecific returns true when at least one token in qt is an explicit
+// field query (e.g. url:..., domain:..., user_id:...).  When any token is
+// field-specific, adding a full-string phrase query would produce semantically
+// wrong results, so the caller skips the phrase-wrapping optimisation.
+func anyFieldSpecific(qt []Token) bool {
+	return slices.ContainsFunc(qt, isFieldSpecific)
+}
+
+// isFieldSpecific reports whether t carries an explicit field: prefix and
+// therefore represents a targeted field query rather than free text.
+func isFieldSpecific(t Token) bool {
+	v := t.Value
+	switch t.Type {
+	case TokenWord, TokenQuoted:
+		v = strings.TrimPrefix(v, "-")
+		if _, ok := strings.CutPrefix(v, "type:"); ok {
+			return true
+		}
+		if _, ok := strings.CutPrefix(v, "user_id:"); ok {
+			return true
+		}
+		if strings.HasPrefix(v, "metadata.") && strings.Contains(v, ":") {
+			return true
+		}
+		for f := range weights {
+			if strings.HasPrefix(v, f+":") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func createSimpleQuery(s string) query.Query {

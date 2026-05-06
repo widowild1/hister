@@ -117,7 +117,8 @@ func asConjunction(t *testing.T, q query.Query) *query.ConjunctionQuery {
 	return cq
 }
 
-// Build() wraps token queries in a DisjunctionQuery only for multi-token (len(qt) > 1) queries:
+// Build() wraps token queries in a DisjunctionQuery only for multi-token (len(qt) > 1) queries
+// where NO token is field-specific:
 //
 //	Must → ConjunctionQuery{
 //	  DisjunctionQuery{                ← "outer disjunction"
@@ -129,6 +130,12 @@ func asConjunction(t *testing.T, q query.Query) *query.ConjunctionQuery {
 // For single-token queries Must contains the token query directly:
 //
 //	Must → ConjunctionQuery{ token-query }
+//
+// For queries where any token is field-specific (e.g. url:... user_id:..., or
+// python domain:example.com) the phrase wrapping is skipped; Must contains the
+// token queries directly:
+//
+//	Must → ConjunctionQuery{ query-1, query-2, ... }
 //
 // For negated-only queries Must is nil.
 //
@@ -498,6 +505,46 @@ func Test_build_multiple_tokens_positive_and_negative(t *testing.T) {
 	if len(nots) != 1 {
 		t.Fatalf("expected 1 must_not clause, got %d", len(nots))
 	}
+}
+
+// Test that all-field-specific multi-token queries skip the phrase-query wrapping.
+// The Must clause should contain the token queries directly (via ConjunctionQuery),
+// NOT wrapped in a DisjunctionQuery with a phrase query arm.
+
+func Test_build_all_field_specific_url_user_id(t *testing.T) {
+	bq := buildBoolQ(t, `url:"https://example.com" user_id:5`)
+	clauses := mustClauses(t, bq)
+	// Should have 2 clauses directly (url TermQuery + user_id NumericRange),
+	// not 1 outer DisjunctionQuery.
+	if len(clauses) != 2 {
+		t.Fatalf("expected 2 must clauses (no phrase wrap), got %d", len(clauses))
+	}
+	asTerm(t, clauses[0])
+	asNumericRange(t, clauses[1])
+}
+
+func Test_build_all_field_specific_domain_title(t *testing.T) {
+	bq := buildBoolQ(t, "domain:example.com title:foo")
+	clauses := mustClauses(t, bq)
+	if len(clauses) != 2 {
+		t.Fatalf("expected 2 must clauses (no phrase wrap), got %d", len(clauses))
+	}
+	asTerm(t, clauses[0])
+	asMatch(t, clauses[1])
+}
+
+// A mixed query (one field-specific, one free text) should also skip phrase wrapping
+// because the presence of any field-specific token makes a full-string phrase query wrong.
+func Test_build_mixed_field_and_free_text_skips_phrase_wrap(t *testing.T) {
+	bq := buildBoolQ(t, "python domain:example.com")
+	clauses := mustClauses(t, bq)
+	// Should have 2 clauses directly (free-text DisjunctionQuery + domain TermQuery),
+	// not 1 outer DisjunctionQuery wrapping a phrase.
+	if len(clauses) != 2 {
+		t.Fatalf("expected 2 must clauses (no phrase wrap), got %d", len(clauses))
+	}
+	asDisjunction(t, clauses[0]) // free-text "python" fans out to title/text/url/domain
+	asTerm(t, clauses[1])        // domain:example.com → TermQuery
 }
 
 // --- normalizeFileURL tests ---
