@@ -216,6 +216,151 @@ Config merging (default → user-supplied) is performed automatically by
 `extractor.Init` before `SetConfig` is called, so `SetConfig` always receives
 the fully resolved configuration.
 
+## Built-in extractors
+
+The extractors below are tried in the order listed. The first one that returns
+`ExtractorStop` wins; the rest are skipped. Extractors that always return
+`ExtractorContinue` act as metadata enrichers, they annotate the document
+and then pass control to the next extractor in the chain.
+
+### `jsonld`
+
+Parses every `<script type="application/ld+json">` block in the page and writes
+normalised [schema.org](https://schema.org) metadata to `d.Metadata`. Captures
+the `@type` (content classification) and `headline` fields that the Readability
+extractor does not expose.
+
+Always returns `ExtractorContinue`, it enriches metadata but never produces
+body text on its own. The `Readability` or `Default` extractor further down the
+chain handles text extraction.
+
+**Matches:** any page that contains the `application/ld+json` substring.
+
+### `stackoverflow`
+
+Provides a rich preview for Stack Overflow question pages. The preview pane
+shows the full question body followed by each answer separated by a horizontal
+rule. Text extraction falls through to the `Readability` extractor.
+
+**Matches:** `https://stackoverflow.com/questions/…`
+
+### `godoc`
+
+Provides a rich preview for Go package documentation. The preview pane renders
+the `Documentation-content` section of the page with relative links rewritten to
+absolute `pkg.go.dev` URLs. Text extraction falls through to the `Readability`
+extractor.
+
+**Matches:** `https://pkg.go.dev/…`
+
+### `github`
+
+Extracts repository metadata and README content from GitHub project pages.
+Produces searchable text from the repository description, star count, topics,
+programming languages, and README plain text. The preview pane renders the
+description summary card plus the sanitized README HTML.
+
+**Matches:** `https://github.com/{owner}/{repo}` URLs (repository root pages
+only; non-repository system paths such as `/settings`, `/topics`, and `/explore`
+are excluded).
+
+### `lobsters`
+
+Extracts the full content of a lobste.rs submission, including the story
+metadata (title, author, tags, submission date), the optional story body, and
+the complete nested comment tree. Both indexed text and preview preserve the
+parent–child comment hierarchy.
+
+**Matches:** `https://lobste.rs/s/…`
+
+### `wikipedia`
+
+Extracts article content from Wikipedia. Indexed text includes the article
+title, infobox key–value pairs, and the body text with navigation boxes,
+references, and other noise removed. The preview renders the article HTML with
+inline styles applied, videos replaced by their poster frames, and relative URLs
+rewritten to absolute Wikipedia URLs.
+
+**Matches:** `https://*.wikipedia.org/wiki/…` (article pages only; non-content
+namespaces such as `Special:`, `Talk:`, `User:`, `File:`, and `Category:` are
+excluded).
+
+### `mastodon`
+
+Handles Mastodon instance pages by splitting them into individual toot documents.
+Each toot found on the page is indexed as a separate document with its own URL
+and author, allowing individual posts to appear in search results. The original
+aggregator page is not indexed.
+
+Detection is heuristic: the extractor checks for a `"repository":"mastodon/mastodon"`
+marker in the page HTML, or for a `type: toot` metadata flag set by a previous
+pass.
+
+**Matches:** any Mastodon instance page containing the Mastodon source marker.
+
+### `ytdlp`
+
+Extracts video metadata from video-hosting sites (YouTube, Vimeo, Twitch, etc.)
+using the [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) command-line tool.
+Provides a dedicated video preview template that shows the thumbnail, duration,
+uploader, description, chapter list, and optional transcript.
+
+The extractor is **disabled by default** because it requires `yt-dlp` to be
+installed separately.
+
+**Matches:** a curated list of video-hosting domains (YouTube, Vimeo, Twitch,
+Dailymotion, Bilibili, and others), as well as any hostname containing common
+video-platform substrings.
+
+#### Options
+
+| Option                 | Type            | Default  | Description                                                                                                                                                                                          |
+| ---------------------- | --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `binary`               | string          | `yt-dlp` | Path to the `yt-dlp` executable. Useful when the binary is not on `PATH` or you want to pin a specific version.                                                                                      |
+| `timeout`              | int             | `15`     | Seconds to wait for `yt-dlp` to finish before aborting the request.                                                                                                                                  |
+| `fetch_subtitles`      | bool            | `false`  | Download and append subtitles/auto-generated transcript to the indexed text and preview.                                                                                                             |
+| `sub_language`         | string          | `auto`   | Subtitle language code to request (e.g. `en`, `de`, `fr`). `auto` selects auto-generated captions. Only used when `fetch_subtitles` is `true`.                                                       |
+| `cookies_file`         | string          | -        | Path to a [Netscape-format cookies file](https://curl.se/docs/http-cookies.html). Passed to `yt-dlp` as `--cookies`. Useful for age-restricted or members-only content.                              |
+| `cookies_from_browser` | string          | -        | Browser name from which `yt-dlp` should extract cookies at runtime (e.g. `chrome`, `firefox`, `safari`). Passed as `--cookies-from-browser`. Takes precedence over `cookies_file` when both are set. |
+| `extra_args`           | list of strings | -        | Additional `yt-dlp` CLI flags appended verbatim to every invocation.                                                                                                                                 |
+
+#### Example configuration
+
+```yaml
+extractors:
+  ytdlp:
+    enable: true
+    options:
+      binary: /usr/local/bin/yt-dlp
+      timeout: 30
+      fetch_subtitles: true
+      sub_language: en
+      cookies_from_browser: firefox
+      extra_args:
+        - --proxy
+        - socks5://127.0.0.1:1080
+```
+
+### `readability`
+
+Generic article extractor using the
+[go-readability](https://codeberg.org/readeck/go-readability) library. Strips
+navigation, ads, sidebars, and other boilerplate and returns the main article
+content as clean plain text and HTML. Also extracts author, publication date,
+description, site name, and canonical image from JSON-LD, OpenGraph, and meta
+tags.
+
+**Matches:** every page. Acts as the primary fallback for all content that no
+specialist extractor handles.
+
+### `default`
+
+Ultimate fallback. Walks the raw HTML token stream and collects all visible text
+inside `<body>`, discarding `<script>`, `<style>`, and `<noscript>` elements.
+Produces plain text with no further processing.
+
+**Matches:** every page. Only reached when `Readability` fails or is disabled.
+
 ## Development guidelines
 
 **Avoid additional HTTP requests.** Work with the HTML and metadata already
