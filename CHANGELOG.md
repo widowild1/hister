@@ -1,5 +1,167 @@
 # Changelog
 
+## v0.14.0
+
+### New Features
+
+#### Mastodon Extractor
+
+A dedicated extractor for Mastodon detects Mastodon pages and indexes each
+toot as its own separate document rather than one big blob of text. Works
+with any Mastodon instance without configuration. Every toot gets a
+`metadata.type:toot` field so you can filter toots in search queries.
+Combined with a search alias (`!toot → metadata.type:toot`) this makes
+finding past toots fast and convenient.
+
+#### Metadata Query Filtering
+
+Documents can now be filtered by arbitrary metadata fields using the
+`metadata.key:value` query syntax. Extractors (including the new Mastodon
+extractor) populate these fields at index time.
+
+#### Full Screen Preview
+
+The split-screen preview can now be toggled into a full-screen mode that
+occupies the entire content area (closes #401). The URL changes to
+`/preview/[id]` so the view survives a page reload. Pressing the "view
+result content" hotkey switches between split and full-screen. Full-screen
+preview is also available on the history page.
+
+#### Preview Panel on History Page
+
+The history page now shows the same interactive preview panel as the search
+page (closes #395). Hotkey navigation between history entries works the same
+way as on the search page.
+
+#### Infinite Scroll
+
+Search results now load more pages automatically as you scroll to the bottom
+of the list, removing the need to manually page through results (closes #1).
+
+#### Image Lightbox
+
+Images displayed inside the preview panel can be clicked to open a full-size
+lightbox view.
+
+#### Delete All Results
+
+A new "delete all" action removes every document that matches the current
+search query at once, without having to delete results one by one.
+
+#### Keyboard Shortcut for Result Deletion
+
+A dedicated hotkey deletes the currently focused search result directly from
+the keyboard.
+
+#### Quick Skip Rule
+
+A skip-rule component lets you add a URL to your skip list directly from a
+search result, available in both the web app and the browser extension
+(closes #380).
+
+#### robots.txt Support
+
+The crawler and `hister index` now respect `robots.txt` by default (closes
+#386). A new `ignore_robots_txt` config option disables this check when
+needed.
+
+#### Document Labeling
+
+Documents can be tagged with custom labels when indexing from the CLI
+(`--label`) or from the browser extension. Labels are stored as metadata
+and can be used in search queries (closes #156, #373).
+
+#### Editable Rules and Aliases
+
+Existing skip/priority rules and search aliases can now be edited in the
+web UI instead of having to delete and recreate them (closes #270).
+
+#### Exact Phrase Matching
+
+Multi-word queries now also attempt an exact phrase match across title and
+text, so searching for `open source` surfaces pages that contain that exact
+phrase more prominently (closes #394).
+
+#### Extractor Templates and Extra Document Creation
+
+Extractors can now supply a custom preview template, giving each content
+type its own presentation in the preview panel. Extractors can also produce
+additional sub-documents from a single page (used by the Mastodon extractor
+to create one document per toot). A template scaffold is included to make
+writing new extractors easier.
+
+#### WebDriver BiDi Crawler Backend
+
+A new `bidi` crawler backend uses the W3C [WebDriver BiDi](https://w3c.github.io/webdriver-bidi/)
+protocol to drive an **already-running** browser over a WebSocket connection.
+Unlike the `chromedp` backend, it does not launch a browser process: you start
+the browser yourself (headless or not) and point Hister at it:
+
+```bash
+# Firefox
+firefox --remote-debugging-port 9222
+
+# Chrome / Chromium
+chromium --remote-debugging-port=9222
+```
+
+```yaml
+crawler:
+  backend: bidi
+  backend_options:
+    host: '127.0.0.1'
+    port: '9222'
+    capture_delay: 1.5 # extra seconds to wait after load for JS rendering
+```
+
+Supported by Firefox (≥ 102), Chrome/Chromium (≥ 106), and Edge. Options:
+`socket` (full WebSocket URL), `host`, `port`, `capture_delay`. The crawler
+reuses a single BiDi session for all URLs in one `hister index` run, making
+multi-URL indexing significantly more efficient than opening a new browser
+session per URL (closes #284).
+
+### Enhancements
+
+- **Resizable preview panel**: drag the divider in split-screen view to
+  adjust the panel width; the chosen width persists across sessions
+- **History hotkey navigation**: keyboard navigation between history entries
+  on the history page
+- **Secondary date sorting**: when search scores are equal, results are
+  sorted by indexed date
+- **yt-dlp multi-language subtitles**: configure which subtitle languages
+  the yt-dlp extractor indexes
+- **MCP date filtering**: MCP search requests can now be filtered by date
+- **Semantic search chunking**: punctuation-based boundaries used for
+  chunk splitting, improving relevance for sentence-level queries
+- **OIDC enhancements**: userinfo endpoint is now configurable for
+  providers without auto-discovery (#279); password login can be disabled
+  when OAuth is the only configured auth method
+- **Clearer CLI error messages**: client-side HTTP errors now explain the
+  problem in plain words and suggest which flag to use (#400)
+- **Duplicate rule prevention**: the server and UI both reject duplicate
+  skip/priority rules and aliases (#399)
+- **Deletion error feedback**: errors during document deletion are now
+  surfaced in the UI
+- **Rules/aliases UX**: input fields moved above their respective lists
+- **Version string in server log**: the server start message now includes
+  the version number (#372)
+- **Silent WebSocket disconnect**: closing the browser tab no longer shows
+  a connection-error message
+
+### Bug Fixes
+
+- Search terms are now properly escaped before query execution
+- Focused result index computed correctly when priority results are present
+- Phrase queries are only applied when no field-specific terms exist in the
+  query
+- `/api/delete` requests from the browser extension are now accepted
+- `text` and `html` fields always included in search results (#374)
+- Language field included in document search results
+- OIDC scopes correctly forwarded to the provider (#371)
+- Auth page is scrollable on small screens (#370)
+- TUI client now passes the access token to the server (#368)
+- Optional peer dependencies no longer excluded on non-Linux platforms (#299)
+
 ## v0.13.0
 
 ### New Features
