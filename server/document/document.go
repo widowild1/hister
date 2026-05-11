@@ -222,6 +222,16 @@ func (d *Document) ID() string {
 	return GetDocID(d.UserID, d.URL)
 }
 
+func (d *Document) AddMetadata(k string, v any) {
+	if d.Metadata == nil {
+		d.Metadata = map[string]any{
+			k: v,
+		}
+	} else {
+		d.Metadata[k] = v
+	}
+}
+
 // GetPreviewMeta returns the document's normalized metadata (merged
 // readability + JSON-LD output) for the preview UI. Returns nil when
 // there is nothing to surface.

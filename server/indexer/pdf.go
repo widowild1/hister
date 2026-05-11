@@ -26,6 +26,7 @@ func AddPDF(d *document.Document, pdfData []byte) error {
 		return errors.New("pdf contains no extractable text")
 	}
 	d.Text = text
+	d.AddMetadata("type", "pdf")
 	return Add(d)
 }
 
