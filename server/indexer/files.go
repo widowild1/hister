@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/rs/zerolog/log"
@@ -81,6 +82,7 @@ func IndexFile(path string) error {
 	if info.Size() == 0 {
 		return ErrEmptyFile
 	}
+
 	if info.Size() > maxFileSize {
 		return fmt.Errorf("%w: %d bytes", ErrFileTooLarge, info.Size())
 	}
@@ -103,15 +105,23 @@ func IndexFile(path string) error {
 			Msg: err.Error(),
 		}
 	}
-	if !utf8.Valid(content) {
-		return ErrBinaryFile
-	}
 
 	doc := &document.Document{
 		URL:   fileURL,
-		Text:  string(content),
 		Added: info.ModTime().Unix(),
 	}
 
+	if strings.EqualFold(filepath.Ext(path), ".pdf") {
+		return AddPDF(doc, content)
+	}
+
+	if !utf8.Valid(content) {
+		return ErrBinaryFile
+	}
+	if int64(len(content)) > maxFileSize {
+		return fmt.Errorf("%w: %d bytes", ErrFileTooLarge, int64(len(content)))
+	}
+
+	doc.Text = string(content)
 	return i.AddDocument(doc)
 }
