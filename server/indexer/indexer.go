@@ -535,7 +535,7 @@ func (i *indexer) AddDocument(d *document.Document) error {
 				embedDocumentChunks(i, d)
 			})
 		}
-		if err := i.getOrCreate(d.Language).Index(d.ID(), d); err != nil {
+		if err := i.save(d); err != nil {
 			return err
 		}
 	}
@@ -545,6 +545,14 @@ func (i *indexer) AddDocument(d *document.Document) error {
 		}
 	}
 	return nil
+}
+
+func (i *indexer) save(d *document.Document) error {
+	return i.getOrCreate(d.Language).Index(d.ID(), d)
+}
+
+func Save(d *document.Document) error {
+	return i.save(d)
 }
 
 func GetLatestDocuments(limit int, latest string, userID uint) *Results {
