@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 <script lang="ts">
-  import type { ResultState } from '$lib/result-state.svelte';
+  import type { ResultState } from '$lib/result-resultState.svelte';
   import { SkipRuleActions } from '@hister/components';
   import { Input } from '@hister/components/ui/input';
   import { Button } from '@hister/components/ui/button';
@@ -11,7 +11,7 @@
     url: string;
     title: string;
     domain: string;
-    state: ResultState;
+    resultState: ResultState;
     query: string;
     pinned?: boolean;
     onDelete?: () => void;
@@ -23,19 +23,22 @@
     url,
     title,
     domain,
-    state,
+    resultState,
     query,
     pinned = false,
     onDelete,
     removeResult,
     removeResultsByDomain,
   }: Props = $props();
+
+  let open = $state(false);
 </script>
 
 <DropdownMenu.Root
-  onOpenChange={(open) => {
-    if (!open) return;
-    state.onOpen();
+  bind:open
+  onOpenChange={(isOpen) => {
+    if (!isOpen) return;
+    resultState.onOpen();
   }}
 >
   <DropdownMenu.Trigger>
@@ -67,7 +70,7 @@
             variant="outline"
             size="sm"
             class="border-hister-rose text-hister-rose hover:bg-hister-rose/10 w-full border-[2px] text-xs"
-            onclick={() => state.pin(url, title, query, true)}
+            onclick={() => resultState.pin(url, title, query, true)}
           >
             <PinOff class="size-3.5" />
             Unpin
@@ -78,7 +81,7 @@
           </p>
           <div class="flex items-center gap-2">
             <Input
-              bind:value={state.actionsQuery}
+              bind:value={resultState.actionsQuery}
               placeholder="Query.."
               size="sm"
               class="font-inter border-border-brand-muted focus-visible:border-hister-indigo flex-1 border-[2px] text-sm shadow-none focus-visible:ring-0"
@@ -87,7 +90,7 @@
               variant="outline"
               size="sm"
               class="border-hister-indigo text-hister-indigo border-[2px] text-xs"
-              onclick={() => state.pin(url, title, query)}
+              onclick={() => resultState.pin(url, title, query)}
             >
               <Pin class="size-3.5" />
               Pin
@@ -97,15 +100,24 @@
         {/if}
       </div>
       <SkipRuleActions
-        onAddSkipRule={(type, deleteMatches) =>
-          state.addSkipRule(url, domain, type, deleteMatches, removeResult, removeResultsByDomain)}
+        onAddSkipRule={async (type, deleteMatches) => {
+          await resultState.addSkipRule(
+            url,
+            domain,
+            type,
+            deleteMatches,
+            removeResult,
+            removeResultsByDomain,
+          );
+          if (deleteMatches) open = false;
+        }}
       />
       <hr />
       <div class="space-y-2">
         <p class="font-outfit mb-1 text-xs font-bold tracking-widest uppercase">Label:</p>
         <div class="flex items-center gap-2">
           <Input
-            bind:value={state.labelInput}
+            bind:value={resultState.labelInput}
             placeholder="Add a label…"
             size="sm"
             class="font-inter border-border-brand-muted focus-visible:border-hister-amber flex-1 border-[2px] text-sm shadow-none focus-visible:ring-0"
@@ -114,17 +126,19 @@
             variant="outline"
             size="sm"
             class="border-[2px] text-xs"
-            onclick={() => state.updateLabel(url)}
+            onclick={() => resultState.updateLabel(url)}
           >
             <Tag class="size-3.5" />
             Save
           </Button>
         </div>
-        {#if state.labelMessage}
+        {#if resultState.labelMessage}
           <p
-            class="font-inter text-xs {state.labelError ? 'text-hister-rose' : 'text-hister-teal'}"
+            class="font-inter text-xs {resultState.labelError
+              ? 'text-hister-rose'
+              : 'text-hister-teal'}"
           >
-            {state.labelMessage}
+            {resultState.labelMessage}
           </p>
         {/if}
       </div>
@@ -134,17 +148,22 @@
           variant="outline"
           size="sm"
           class="border-hister-rose text-hister-rose hover:bg-hister-rose/10 w-full border-[2px] text-xs"
-          onclick={onDelete}
+          onclick={() => {
+            open = false;
+            onDelete?.();
+          }}
         >
           <Trash2 class="size-3.5" />
           Delete result
         </Button>
       {/if}
-      {#if state.actionsMessage}
+      {#if resultState.actionsMessage}
         <p
-          class="font-inter text-xs {state.actionsError ? 'text-hister-rose' : 'text-hister-teal'}"
+          class="font-inter text-xs {resultState.actionsError
+            ? 'text-hister-rose'
+            : 'text-hister-teal'}"
         >
-          {state.actionsMessage}
+          {resultState.actionsMessage}
         </p>
       {/if}
     </div>

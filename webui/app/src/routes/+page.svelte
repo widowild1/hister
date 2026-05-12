@@ -1536,7 +1536,7 @@
                           url={r.url}
                           title={r.title || '*title*'}
                           domain={r.domain}
-                          {state}
+                          resultState={state}
                           {query}
                           pinned={r.isPinned}
                           onDelete={r.isPinned ? undefined : () => deleteResult(r.url)}
