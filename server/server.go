@@ -575,11 +575,15 @@ func serveLogout(c *webContext) {
 
 func serveProfile(c *webContext) {
 	if c.Config.App.UserHandling {
-		c.JSON(map[string]any{
+		resp := map[string]any{
 			"user_id":  c.UserID,
 			"username": c.Username,
 			"is_admin": c.IsAdmin,
-		})
+		}
+		if c.IsAdmin {
+			resp["version"] = Version
+		}
+		c.JSON(resp)
 		return
 	}
 	serve200(c)

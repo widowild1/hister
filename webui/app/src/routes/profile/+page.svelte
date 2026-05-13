@@ -4,7 +4,7 @@
   import * as Card from '@hister/components/ui/card';
   import { PageHeader } from '@hister/components';
   import { StatusMessage } from '$lib/components';
-  import { Eye, EyeOff, RefreshCw, User } from 'lucide-svelte';
+  import { Eye, EyeOff, RefreshCw, User, Info } from 'lucide-svelte';
 
   let username = $state('');
   let token = $state('');
@@ -12,12 +12,16 @@
   let message = $state('');
   let messageType = $state<'success' | 'error'>('success');
   let generating = $state(false);
+  let isAdmin = $state(false);
+  let version = $state('');
 
   $effect(() => {
     apiFetch('/profile')
       .then((r) => r.json())
       .then((data) => {
         username = data.username;
+        isAdmin = data.is_admin ?? false;
+        version = data.version ?? '';
       })
       .catch(() => {
         message = 'Failed to load profile';
@@ -130,5 +134,30 @@
         </Button>
       </Card.Content>
     </Card.Root>
+
+    <!-- Instance info card — admin only -->
+    {#if isAdmin && version}
+      <Card.Root
+        class="bg-card-surface border-brutal-border gap-0 overflow-hidden rounded-none border-[3px] py-0 shadow-[6px_6px_0_var(--brutal-shadow)]"
+      >
+        <Card.Header class="border-brutal-border border-b-[3px] px-7 py-5">
+          <Card.Title
+            class="font-outfit text-text-brand flex items-center gap-2 text-xl font-black tracking-wide"
+          >
+            <Info size={20} />
+            Instance Info
+          </Card.Title>
+        </Card.Header>
+        <Card.Content class="px-7 py-6">
+          <div class="flex items-center gap-3">
+            <span
+              class="font-outfit text-text-brand-muted w-32 shrink-0 text-sm font-bold tracking-widest uppercase"
+              >Version</span
+            >
+            <span class="font-fira text-text-brand text-sm">{version}</span>
+          </div>
+        </Card.Content>
+      </Card.Root>
+    {/if}
   </div>
 </div>
