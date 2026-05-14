@@ -1216,6 +1216,9 @@ func servePreview(c *webContext) {
 		"template": resp.Template,
 		"added":    doc.Added,
 	}
+	if versionCount, err := model.CountDocumentVersions(u, c.UserID); err == nil && versionCount > 0 {
+		payload["version_count"] = versionCount
+	}
 	if meta := doc.GetPreviewMeta(); meta != nil {
 		payload["meta"] = meta
 	}

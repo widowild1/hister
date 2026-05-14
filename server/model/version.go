@@ -30,6 +30,17 @@ func SaveDocumentVersion(url string, userID uint, htmlDiff, textDiff string) err
 	return DB.Create(v).Error
 }
 
+// CountDocumentVersions returns the number of stored versions for a URL and user.
+func CountDocumentVersions(url string, userID uint) (int64, error) {
+	var count int64
+	if err := DB.Model(&DocumentVersion{}).
+		Where("url = ? AND user_id = ?", url, userID).
+		Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // GetDocumentVersions returns all stored version diffs for a URL and user,
 // ordered from newest to oldest.
 func GetDocumentVersions(url string, userID uint) ([]*DocumentVersion, error) {

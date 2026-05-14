@@ -31,6 +31,7 @@
   let meta = $state<Record<string, any> | null>(null);
   let added = $state<number | null>(null);
   let loading = $state(false);
+  let versionCount = $state(0);
   let versions = $state<DocumentVersion[]>([]);
   let showVersions = $state(false);
 
@@ -63,7 +64,6 @@
   $effect(() => {
     if (url) {
       loadContent(url, hintTitle);
-      loadVersions(url);
     }
   });
 
@@ -76,6 +76,8 @@
     added = null;
     title = hint;
     showVersions = false;
+    versions = [];
+    versionCount = 0;
     try {
       const resp = await apiFetch(`/preview?url=${encodeURIComponent(u)}`);
       if (!resp.ok) {
@@ -85,6 +87,7 @@
         title = data.title || hint;
         added = data.added ?? null;
         meta = data.meta ?? null;
+        versionCount = data.version_count ?? 0;
         template = data.template || '';
         templateData = template === 'video' ? parseTemplateData(data.content) : null;
         content = template === 'video' ? '' : data.content || '<p>No content available</p>';
@@ -96,16 +99,22 @@
     }
   }
 
-  async function loadVersions(u: string) {
-    versions = [];
-    try {
-      const resp = await apiFetch(`/versions?url=${encodeURIComponent(u)}`);
-      if (resp.ok) {
-        versions = (await resp.json()) ?? [];
-      }
-    } catch {
-      // silently ignore — versions are optional
+  async function toggleVersions(u: string) {
+    if (showVersions) {
+      showVersions = false;
+      return;
     }
+    if (versions.length === 0) {
+      try {
+        const resp = await apiFetch(`/versions?url=${encodeURIComponent(u)}`);
+        if (resp.ok) {
+          versions = (await resp.json()) ?? [];
+        }
+      } catch {
+        // silently ignore
+      }
+    }
+    showVersions = true;
   }
 </script>
 
@@ -171,15 +180,15 @@
             title={formatTimestamp(added)}
           >
             <span>indexed {formatTimestamp(added)}</span>
-            {#if versions.length > 0}
+            {#if versionCount > 0}
               <span class="text-text-brand-muted">·</span>
               <button
-                onclick={() => (showVersions = !showVersions)}
+                onclick={() => toggleVersions(url)}
                 class="font-inter text-hister-teal inline-flex cursor-pointer items-center gap-1 text-xs hover:underline"
               >
                 <History class="size-3" />
-                {versions.length}
-                {versions.length === 1 ? 'previous version' : 'previous versions'}
+                {versionCount}
+                {versionCount === 1 ? 'previous version' : 'previous versions'}
               </button>
             {/if}
           </span>
