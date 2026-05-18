@@ -6,7 +6,7 @@ on:
 jobs:
   golangci-lint:
     name: golangci-lint
-    runs-on: ubuntu-latest
+    runs-on: codeberg-tiny
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2
@@ -45,7 +45,7 @@ jobs:
 
   npm-format:
     name: NPM formatting
-    runs-on: ubuntu-latest
+    runs-on: codeberg-tiny
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2
@@ -87,7 +87,7 @@ jobs:
 
   no-merge-commits:
     name: No merge commits
-    runs-on: ubuntu-latest
+    runs-on: codeberg-tiny
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2

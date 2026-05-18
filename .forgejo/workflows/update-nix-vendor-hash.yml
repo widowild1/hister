@@ -1,17 +1,6 @@
 name: Update Nix hashes
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - go.mod
-      - go.sum
-      - package.json
-      - package-lock.json
-      - nix/package.nix
-      - .forgejo/workflows/update-nix-vendor-hash.yml
-      - nix/update-nix-vendor-hash.sh
   workflow_dispatch:
 
 permissions:

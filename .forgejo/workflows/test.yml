@@ -6,7 +6,7 @@ on:
 jobs:
   go-test:
     name: Go test
-    runs-on: runner_name
+    runs-on: codeberg-tiny
     steps:
       - name: Checkout
         uses: actions/checkout@v6.0.2

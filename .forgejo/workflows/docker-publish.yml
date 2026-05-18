@@ -12,16 +12,12 @@ env:
 jobs:
   build-and-push:
     name: build and push (${{ matrix.target }})
-    runs-on: runner_name
+    runs-on: codeberg-medium
     strategy:
       matrix:
         include:
-          - target: release
-            suffix: ''
-          - target: root
-            suffix: '-root'
-          - target: debug
-            suffix: '-debug'
+          - target: [release, root, debug]
+            suffix: ['', '-root', '-debug']
     permissions:
       contents: read
       packages: write # Required to push to GHCR
@@ -40,7 +36,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ forgejo.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }} # Auto-generated, no setup needed
+          password: ${{ secrets.FORGEJO_TOKEN }} # Auto-generated, no setup needed
 
       - name: Extract Metadata (tags, labels)
         id: meta
