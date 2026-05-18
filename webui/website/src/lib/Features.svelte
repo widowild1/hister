@@ -1,142 +1,111 @@
 <script lang="ts">
-  import Shield from '@lucide/svelte/icons/shield';
-  import FileText from '@lucide/svelte/icons/file-text';
-  import Zap from '@lucide/svelte/icons/zap';
-  import Search from '@lucide/svelte/icons/search';
-  import Settings from '@lucide/svelte/icons/settings';
-  import Puzzle from '@lucide/svelte/icons/puzzle';
-  import WifiOff from '@lucide/svelte/icons/wifi-off';
-  import Download from '@lucide/svelte/icons/download';
-  import Brain from '@lucide/svelte/icons/brain';
   import { PageHeader } from '@hister/components';
-  import { FeatureCard } from '@hister/components';
 
-  const rows = [
-    [
-      {
-        icon: Shield,
-        title: 'Privacy-focused',
-        desc: 'Keep your browsing history indexed locally. No remote servers, no tracking, no data leaving your machine.',
-        bg: 'bg-brutal-card',
-        textColor: 'text-[var(--text-primary)]',
-        descColor: 'text-[var(--text-secondary)]',
-        iconBg: 'bg-hister-indigo',
-      },
-      {
-        icon: FileText,
-        title: 'Full-text Indexing',
-        desc: 'Search through the actual content of web pages and your local files.',
-        bg: 'bg-brutal-card',
-        textColor: 'text-[var(--text-primary)]',
-        descColor: 'text-[var(--text-secondary)]',
-        iconBg: 'bg-hister-coral',
-      },
-    ],
-    [
-      {
-        icon: Zap,
-        title: 'Blazing Fast',
-        desc: 'Instant results as you type. Full keyboard-driven workflow for maximum efficiency.',
-        bg: 'bg-hister-indigo',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-      {
-        icon: Search,
-        title: 'Advanced Search',
-        desc: 'Powerful query language for precise results.',
-        bg: 'bg-[var(--text-primary)]',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-      {
-        icon: Settings,
-        title: 'Flexible Management',
-        desc: 'Configure blacklist and priority rules to control your indexed content.',
-        bg: 'bg-hister-teal',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-    ],
-    [
-      {
-        icon: Puzzle,
-        title: 'Browser Extensions',
-        desc: 'Available for <a class="underline" href="https://chromewebstore.google.com/detail/hister/cciilamhchpmbdnniabclekddabkifhb">Chrome</a> and <a class="underline" href="https://addons.mozilla.org/en-US/firefox/addon/hister/">Firefox</a> to automatically index websites you visit.',
-        bg: 'bg-hister-lime',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-      {
-        icon: WifiOff,
-        title: 'Offline Preview',
-        desc: 'Readable offline previews of any result. Access your saved pages without internet.',
-        bg: 'bg-hister-coral',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-      {
-        icon: Download,
-        title: 'Browser Import',
-        desc: 'Import existing Firefox or Chrome history with a single command.',
-        bg: 'bg-hister-rose',
-        textColor: 'text-white',
-        descColor: 'text-white/80',
-        iconBg: 'bg-white/20',
-      },
-    ],
+  const accentColors = [
+    '--hister-lime',
+    '--hister-coral',
+    '--hister-amber',
+    '--hister-rose',
+    '--hister-cyan',
+    '--hister-teal',
+    '--hister-indigo',
   ];
 
-  const aliasCard = {
-    icon: Brain,
-    title: 'AI Integration',
-    desc: 'Optional semantic search and MCP connectivity',
-    bg: 'bg-hister-cyan',
-    textColor: 'text-white',
-    descColor: 'text-white/80',
-    iconBg: 'bg-hister-cyan',
-    iconColor: 'text-white',
-  };
+  const features = [
+    {
+      title: 'Automatic save of visited websites',
+      desc: 'The browser extension silently captures and indexes every page you visit. Your entire browsing history becomes searchable without any manual effort.',
+    },
+    {
+      title: 'Full-text indexing',
+      desc: 'Index the actual content of web pages and local files, not just titles and URLs. Find any document by the words it contains.',
+    },
+    {
+      title: 'Semantic search',
+      desc: 'Find content by meaning, not just keywords. Powered by optional AI embeddings for context-aware, intent-driven results.',
+    },
+    {
+      title: 'Advanced querying',
+      desc: 'Precision search with field filters, boolean operators, phrase matching, wildcards, and personal query aliases for faster recall.',
+    },
+    {
+      title: 'Result preview',
+      desc: 'Open a clean, reader-friendly offline preview of any indexed page directly inside Hister, no internet connection required.',
+    },
+    {
+      title: 'Crawler with multiple backends',
+      desc: 'Index entire websites with the built-in BFS crawler. Supports a standard HTTP backend and a headless Chrome (chromedp) backend for JavaScript-heavy pages.',
+    },
+    {
+      title: 'MCP server',
+      desc: 'Expose your personal search index as an MCP (Model Context Protocol) tool so AI assistants can query your browsing history directly.',
+    },
+    {
+      title: 'Local file indexing',
+      desc: 'Index and search documents on your filesystem alongside web pages. Directories are watched for changes and the index updates automatically.',
+    },
+    {
+      title: 'Browser history import',
+      desc: 'Bring your existing Firefox or Chrome browsing history into Hister with a single command, no manual data entry required.',
+    },
+    {
+      title: 'History view',
+      desc: 'Browse and revisit your past search queries to quickly return to previous research sessions and rediscover forgotten results.',
+    },
+    {
+      title: 'User handling',
+      desc: 'Create multiple accounts with separate indexes, individual API tokens, and per-user content rules. Ideal for shared or team deployments.',
+    },
+    {
+      title: 'Privacy first',
+      desc: 'Fully self-hosted with no telemetry, no cloud sync, and no third-party services. Your data never leaves your own machine.',
+    },
+    {
+      title: 'Content rules',
+      desc: 'Define skip rules to block unwanted sites, priority rules to surface important domains, and query aliases to create custom search shortcuts.',
+    },
+    {
+      title: 'Browser extensions',
+      desc: 'Lightweight extensions available for Chrome and Firefox. Install once and indexing happens automatically in the background as you browse.',
+    },
+    {
+      title: 'Terminal UI',
+      desc: 'A built-in interactive TUI lets you search directly from the terminal with full keyboard navigation, themes, and configurable hotkeys.',
+    },
+    {
+      title: 'Multi-language support',
+      desc: 'Automatic language detection routes documents to dedicated per-language indexes, improving relevance and ranking across multilingual content.',
+    },
+  ];
 </script>
 
 <section
   id="features"
   class="bg-brutal-bg mx-auto flex max-w-[2000px] flex-col gap-10 px-6 py-12 md:px-12 md:py-16"
 >
-  <PageHeader color="hister-coral" size="lg" tag="h2">Features</PageHeader>
+  <div class="mx-auto flex w-full max-w-[70em] flex-col gap-10">
+    <PageHeader color="hister-coral" size="lg" tag="h2">Features</PageHeader>
 
-  <div class="flex flex-col gap-6">
-    <FeatureCard
-      icon={aliasCard.icon}
-      title={aliasCard.title}
-      description={aliasCard.desc}
-      bg={aliasCard.bg}
-      textColor={aliasCard.textColor}
-      descColor={aliasCard.descColor}
-      iconBg={aliasCard.iconBg}
-      iconColor={aliasCard.iconColor}
-      iconSize="64"
-      horizontal
-    />
-    {#each rows as row}
-      <div class="grid grid-cols-1 gap-4 {row.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}">
-        {#each row as card}
-          <FeatureCard
-            icon={card.icon}
-            title={card.title}
-            description={card.desc}
-            bg={card.bg}
-            textColor={card.textColor}
-            descColor={card.descColor}
-            iconBg={card.iconBg}
-          />
-        {/each}
-      </div>
-    {/each}
+    <div class="bg-brutal-card shadow-brutal-lg border-2 border-[var(--brutal-border)]">
+      {#each features as feature, i}
+        <div
+          style="border-left: 16px solid var({accentColors[i % accentColors.length]})"
+          class="bg-brutal-card grid grid-cols-[1fr_auto] items-center
+            {i < features.length - 1 ? 'border-b-2 border-[var(--brutal-border)]' : ''}"
+        >
+          <div class="px-6 py-5">
+            <p class="text-base font-bold text-[var(--text-primary)] md:text-lg">{feature.title}</p>
+            <p class="mt-1 text-sm text-[var(--text-secondary)]">{feature.desc}</p>
+          </div>
+          <div class="relative flex shrink-0 items-center justify-center px-6">
+            <div
+              class="absolute h-5 w-5 animate-ping rounded-full bg-green-400"
+              style="animation-delay: {i * 0.22}s; animation-duration: 2.2s; opacity: 0.55"
+            ></div>
+            <div class="h-5 w-5 rounded-full bg-green-500"></div>
+          </div>
+        </div>
+      {/each}
+    </div>
   </div>
 </section>
