@@ -84,6 +84,12 @@ func checkStatus(resp *http.Response) error {
 			msg += ": " + detail
 		}
 		return fmt.Errorf("%s\nVerify the server address with --server-url / -u", msg)
+	case http.StatusNotAcceptable:
+		msg := "page skipped: this URL was rejected by the server (usually due to skip rules or disabled domains)"
+		if detail != "" {
+			msg += " (" + detail + ")"
+		}
+		return fmt.Errorf("%s", msg)
 	case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 		msg := fmt.Sprintf("server error (%d)", resp.StatusCode)
 		if detail != "" {
