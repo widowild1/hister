@@ -564,6 +564,7 @@ func (i *indexer) AddDocument(d *document.Document) error {
 }
 
 func (i *indexer) save(d *document.Document) error {
+	log.Debug().Str("URL", d.URL).Msg("item added to index")
 	return i.getOrCreate(d.Language).Index(d.ID(), d)
 }
 

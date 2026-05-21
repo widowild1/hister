@@ -921,7 +921,6 @@ func serveAdd(c *webContext) {
 				}
 			}
 		}
-		log.Debug().Str("URL", d.URL).Msg("item added to index")
 		c.Response.WriteHeader(http.StatusCreated)
 	} else {
 		log.Debug().Str("url", d.URL).Msg("skip indexing")
