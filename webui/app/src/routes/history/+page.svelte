@@ -241,6 +241,9 @@
   function showAll() {
     filterByDate = '';
     activeGroup = groups.length > 0 ? groups[0].key : '';
+    if (sentinel) {
+      getScrollParent(sentinel.parentElement)?.scrollTo({ top: 0, behavior: 'instant' });
+    }
   }
 
   async function loadItems(latest: string = '') {
